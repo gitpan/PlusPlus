@@ -2,63 +2,111 @@ NAME
     PlusPlus - [Delphi|VB|Java]-like Perl preprocessor
 
 SYNOPSIS
+      ### Case 1: plain script
+
       use PlusPlus;
-      
+  
       my $nested_hash = {outer => {inner => {a => 1, b => 2, c => 3}}}
-      
+  
       $nested_hash.outer.inner.a = 5;      # dot syntax for variables
-      
+  
       $dbh.do ("DROP DATABASE TEST");      # dot syntax for methods
-      
+  
       with ($nested_hash.outer.inner) {    # 'with' operator
           ($.a, $.c) = (10, 30);
           print " b = $.b\n";
       };
+  
+      function f ($x) {
+          return sin ($x) * cos ($x)
+      }
+  
+      ### Case 2: working with a database
+  
+      use PlusPlus;
+      use DBI;
+  
+      my $dbh = DBI -> connect ($dsn, $user, $password);
+
+      select name, phone from staff where salary between ? and ? -> my $sth;
+  
+      forsql $sth (1000, 1500) {
+          print "<tr>   <td> $.name </td>  <td> $.phone </td>  </tr>"
+      }
+  
+      ### Case 3: procedural module
+  
+      use PlusPlus;
+  
+      module Child (Ancestor::Mother, Ancestor::Father);  
+  
+                sub foo { ... };           # not exported
+  
+      export    sub bar { ... };           # exported by default
+  
+      export_ok sub baz { ... };           # can be imported explicitly
+  
+      ### Case 4: class
+
+      class Child (Ancestor::Mother, Ancestor::Father);  
+
+      method init {                        # constructor callback
+          ($.x, $.y) = (10, 3);
+      }
+  
+      method diag {                        # some method
+          sqrt ($.x * $.x + $.y * $.y)
+      }
+
+      method do_it_to_me ($coderef) {                 # one more method
+          &$coderef ($self);
+      }
 
 DESCRIPTION
-    PlusPlus is a quick and (maybe) a little bit dirty way to have
-    some additional comfort when working with nested Perl data
-    structures. This module allows some extensions to the Perl
-    syntax.
+    PlusPlus is a Perl syntactical add-on that makes it easier to work with
+    nested hashes, use and develop modules and classes.
 
-    PlusPlus is a source filter (preprocessor) based on the module
-    Filter.
+    PlusPlus is a preprocessor based on the Filter distribution available
+    from CPAN. It alters the standard Perl synax transparently: you don't
+    need to recompile the interpreter or launch your scripts in some
+    specific way. All you need is to install Filter - and
 
-  DOT SYNTAX
+     use PlusPlus;
 
-    Using PlusPlus, you can dramatically clearify your code by
-    typing
+  Dot Syntax
+
+    Using PlusPlus, you can dramatically clearify your code by typing
 
         $foo.bar.baz
-        
+    
     each time instead of
-        
+
         $foo -> {bar} -> {baz}
 
-    Yes, of course, the dot means the concatenation operator. So,
-    you might suppose a collision in case like
+    Yes, of course, the dot means the concatenation operator. So, you might
+    suppose a collision in case like
 
         $foo.$bar
-        
-    What would it be: I<"$foo.$bar"> or I<$foo->{$bar}>? Please, remind: 
-    when using B<PlusPlus>, always type at least one space aside of your
+    
+    What would it be: *"$foo.$bar"* or *$foo-*{$bar}>? Please, remind: when
+    using PlusPlus, always type at least one space aside of your
     concatenation dot. So,
 
         $foo.$bar      eq  $foo->{$bar}
         $foo . $bar    eq  "$foo$bar"
 
-    And what about the method calls? It's very similar (see
-    SYNOPSYS). But, note: the method call must be followed by an
-    open paranthesis, even if the argument list is void.
+    And what about the method calls? It's very similar (see SYNOPSYS). But,
+    note: the method call must be followed by an open paranthesis, even if
+    the argument list is void.
 
         $st.finish     eq  $st -> {finish}
         $st.finish ()  eq  $st -> finish ()
 
-  WITH
+  WITH statement
 
-    The PlusPlus preprocessor introduces the *with* operator in the
-    manner similar to Borland (C) Delphi (R) and MS ($) VB (...).
-    Each fragment of code like
+    The PlusPlus preprocessor introduces the *with* statement in the manner
+    similar to Borland (C) Delphi (R) and MS ($) VB (...). Each fragment of
+    code like
 
         with ($foo) {
             ...
@@ -69,16 +117,132 @@ DESCRIPTION
         do { my $__with__prefix__ = ($foo);
             ...
         };
-        
-    All variables like $.bar are renamed to $__with__prefix__.bar.
-    It is very unprobably that you use the variable named $__with__prefix__,
-    but, in any case, you are warned. 
+    
+    All variables like $.bar are renamed to $__with__prefix__.bar. It is
+    very unprobably that you use the variable named $__with__prefix__, but,
+    in any case, you are warned.
 
-    And, please, don't forget to put a semicolon after the closing
-    brace: *with* is *do*, not *while*.
+    And, please, don't forget to put a semicolon after the closing brace:
+    *with* is *do*, not *while*.
+
+  Named args
+
+    As you know, there is whole a lot of ways to access argument values
+    passed to a sub from within its body (*shift*, *$_[$n]*...). But usually
+    you write a sub that receive a predefined set of args that you want to
+    access by name. In this case, your code looks like
+
+        sub mySub {
+            my ($arg1, $arg2, @all_other) = @_;
+            ...
+        }
+
+    With PlusPlus, you can obtain the same with
+
+        function mySub ($arg1, $arg2, @all_other) {
+            ...
+        }
+    
+    Moreover, often some of parameters have default values to be set if an
+    undef is passed as argument. Using not PlusPlus, you make something like
+
+        sub mySub {
+            my ($arg1, $arg2, $arg3, @all_other) = @_;
+            $arg2 = 2 unless defined ($arg2);
+            $arg3 ||= 3;
+            ...
+        }
+    
+    With PlusPlus:
+
+        function mySub ($arg1, $arg2 = 2, $arg3 = 3, @all_other) {
+            ...
+        }
+
+  DBI-related Stuff
+
+    When using DBI, it's very usual to code like this:
+
+        $sth -> execute ($arg1, $arg2);
+        while (my $hash_ref = $sth -> fetchrow_hashref) {
+            do_somthing ($hash_ref -> {a}, $hash_ref -> {b})
+        }
+
+    OK, it's really nice (when comparing to JDBC :-), but with PlusPlus you
+    can express yourself a little bit cleaner:
+
+        forsql $sth ($arg1, $arg2) {
+            do_somthing ($.a, $.b)
+        }
+
+    Simple, isn't it? But it is not yet the end. PlusPlus allows to use
+    pretty plain SQL in your perl scripts. The source line
+
+        SELECT * FROM foo WHERE id = 6535 -> my $sth;
+    
+    is mapped to
+
+        my $sth = $dbh -> prepare ("SELECT * FROM foo WHERE id = 6535");
+    
+    The *$dbh* name is hardcoded, sorry. Currently only SELECT statements
+    are allowed.
+
+  Procedural Modules
+
+    PlusPlus simplifies the creation of Perl modules. You don't need to use
+    Export.pm explicitly nor fill manually @ISA, @EXPORT and @EXPORT_OK
+    arrays.
+
+    The string
+
+      module Child (Ancestor::Mother, Ancestor::Father);  
+
+    is mapped to
+
+      package Child; use Exporter; use vars qw(\@ISA \@EXPORT \@EXPORT_OK);    
+
+    Moreover, the last (additional) line of your source will contain the
+    needed @ISA expression.
+
+    You can add a modifier export or export_ok to any sub, then its name
+    will appear in @EXPORT or @EXPORT_OK list at the end of source.
+
+    And, finally, you don't ever need to put a 1; after all: it is done
+    automatically.
+
+  Classes
+
+    PlusPlus provides a simple OO-syntax addon to the Perl interpreter. The
+    string like
+
+      class MyObject (Ancestor::Mother, Ancestor::Father);  
+
+    does the same thing as the module statement described above, but creates
+    a standard constructor called new that blesses a void anonymous hashref.
+    Now you can create the appropriate objects with expressions like
+
+      my $object = new MyObject ('blah', "blah");
+
+    in any script that uses your module.
+
+    PlusPlus introduces a special kind of sub for class modules: methods.
+    The source
+
+      method do_it ($x, $y, @foo) {
+        ...
+      }  
+
+    is mapped to
+
+      sub do_it { my $self = shift; my $__with__prefix__ = $self; my ($x, $y, @foo) = @_;
+        ...  
+      }
+
+    The metod named init is called by the constructor new with the arglist
+    passed to it.
 
 AUTHOR
-    D. E. Ovyanko, do@mobile.ru
+    D. E. Ovsyanko, do@rambler.ru
 
 SEE ALSO
     Filter(3).

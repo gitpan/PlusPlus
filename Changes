@@ -1,5 +1,18 @@
-Revision history for Perl extension PlusPlus.
+Revision history for Perl preprocessor PlusPlus.
 
+1.23  Fri May 10 23:37:16 2001
+	- added support for multiline comments;
+	- added support for quasimembers (transparent calls to acessor methods);
+	- added support for list references;
+1.22  Sun Jan 14 21:43:30 2001
+	- added support for named arguments lists (with defaults);
+	- fixed a small bug with empty ancestor list (thanks to Michael A. Nachbaur <mike@nachbaur.com>);
+1.21  Fri Jan 12 22:16:11 2001
+	- fixed a bug with init invocation;
+1.20  Wed Jan 10 23:09:34 2001
+	- added 'forsql' statement and plain SQL 'select';
+1.10  Mon Jan  8 16:38:29 2001
+	- added support for modules/export and classes/methods;
 1.00  Sun Jan  7 18:38:23 2001
-	- original version: dot syntax & 'with' operator are working;
+	- original version: colon syntax & 'with' statement are working;
 
