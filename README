@@ -1,0 +1,85 @@
+NAME
+    PlusPlus - [Delphi|VB|Java]-like Perl preprocessor
+
+SYNOPSIS
+      use PlusPlus;
+      
+      my $nested_hash = {outer => {inner => {a => 1, b => 2, c => 3}}}
+      
+      $nested_hash.outer.inner.a = 5;      # dot syntax for variables
+      
+      $dbh.do ("DROP DATABASE TEST");      # dot syntax for methods
+      
+      with ($nested_hash.outer.inner) {    # 'with' operator
+          ($.a, $.c) = (10, 30);
+          print " b = $.b\n";
+      };
+
+DESCRIPTION
+    PlusPlus is a quick and (maybe) a little bit dirty way to have
+    some additional comfort when working with nested Perl data
+    structures. This module allows some extensions to the Perl
+    syntax.
+
+    PlusPlus is a source filter (preprocessor) based on the module
+    Filter.
+
+  DOT SYNTAX
+
+    Using PlusPlus, you can dramatically clearify your code by
+    typing
+
+        $foo.bar.baz
+        
+    each time instead of
+        
+        $foo -> {bar} -> {baz}
+
+    Yes, of course, the dot means the concatenation operator. So,
+    you might suppose a collision in case like
+
+        $foo.$bar
+        
+    What would it be: I<"$foo.$bar"> or I<$foo->{$bar}>? Please, remind: 
+    when using B<PlusPlus>, always type at least one space aside of your
+    concatenation dot. So,
+
+        $foo.$bar      eq  $foo->{$bar}
+        $foo . $bar    eq  "$foo$bar"
+
+    And what about the method calls? It's very similar (see
+    SYNOPSYS). But, note: the method call must be followed by an
+    open paranthesis, even if the argument list is void.
+
+        $st.finish     eq  $st -> {finish}
+        $st.finish ()  eq  $st -> finish ()
+
+  WITH
+
+    The PlusPlus preprocessor introduces the *with* operator in the
+    manner similar to Borland (C) Delphi (R) and MS ($) VB (...).
+    Each fragment of code like
+
+        with ($foo) {
+            ...
+        };
+
+    is mapped to
+
+        do { my $__with__prefix__ = ($foo);
+            ...
+        };
+        
+    All variables like $.bar are renamed to $__with__prefix__.bar.
+    It is very unprobably that you use the variable named $__with__prefix__,
+    but, in any case, you are warned. 
+
+    And, please, don't forget to put a semicolon after the closing
+    brace: *with* is *do*, not *while*.
+
+AUTHOR
+    D. E. Ovyanko, do@mobile.ru
+
+SEE ALSO
+    Filter(3).
+

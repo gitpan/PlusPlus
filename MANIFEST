@@ -1,0 +1,9 @@
+Changes
+INSTALL
+LICENSE
+MANIFEST
+Makefile.PL
+PlusPlus.pm
+README
+t/dot.t
+t/with.t

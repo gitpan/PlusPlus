@@ -1,0 +1,5 @@
+Revision history for Perl extension PlusPlus.
+
+1.00  Sun Jan  7 18:38:23 2001
+	- original version: dot syntax & 'with' operator are working;
+
